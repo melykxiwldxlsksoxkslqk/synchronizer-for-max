@@ -36,10 +36,33 @@ function isScrollableElement(el: Element): boolean {
   return scrollable && (el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth);
 }
 
+let pendingDocScroll: { x: number; y: number } | null = null;
+let pendingDocRaf = 0;
+
+let pendingElScrolls = new Map<string, { el: HTMLElement; x: number; y: number }>();
+let pendingElRaf = 0;
+
+function applyDocScrollFrame(): void {
+  pendingDocRaf = 0;
+  if (!pendingDocScroll) return;
+  const { x, y } = pendingDocScroll;
+  pendingDocScroll = null;
+  window.scrollTo(x, y);
+}
+
+function applyElScrollFrame(): void {
+  pendingElRaf = 0;
+  pendingElScrolls.forEach(({ el, x, y }) => {
+    el.scrollLeft = x;
+    el.scrollTop = y;
+  });
+  pendingElScrolls = new Map();
+}
+
 export class ScrollActionService extends BrowserActionServiceTemplate {
   readonly actionType = ACTION_TYPES.scroll;
   readonly listenedEventTypes = ["scroll"] as const;
-  readonly throttleMs = 80;
+  readonly throttleMs = 50;
 
   capture(event: Event): ScrollActionPayload | null {
     const target = event.target;
@@ -100,7 +123,7 @@ export class ScrollActionService extends BrowserActionServiceTemplate {
     if (payload.scope.path !== window.location.pathname) return;
 
     const muteKey = `__scroll__:${payload.targetKey || "__doc__"}`;
-    context.markMutedField(muteKey, 150);
+    context.markMutedField(muteKey, 120);
 
     if (payload.targetKey) {
       const el = findElementByKey(payload.targetKey);
@@ -114,14 +137,10 @@ export class ScrollActionService extends BrowserActionServiceTemplate {
       const targetLeft = maxLeft > 0 ? payload.ratioX * maxLeft : payload.scrollX;
       const targetTop = maxTop > 0 ? payload.ratioY * maxTop : payload.scrollY;
 
-      try {
-        el.scrollTo({ left: targetLeft, top: targetTop, behavior: "instant" });
-      } catch (_e) {
-        el.scrollLeft = targetLeft;
-        el.scrollTop = targetTop;
+      pendingElScrolls.set(payload.targetKey, { el, x: targetLeft, y: targetTop });
+      if (!pendingElRaf) {
+        pendingElRaf = requestAnimationFrame(applyElScrollFrame);
       }
-
-      context.logger.debug(`scroll apply element key=${payload.targetKey} y=${targetTop}`);
       return;
     }
 
@@ -130,12 +149,9 @@ export class ScrollActionService extends BrowserActionServiceTemplate {
     const targetX = maxX > 0 ? payload.ratioX * maxX : payload.scrollX;
     const targetY = maxY > 0 ? payload.ratioY * maxY : payload.scrollY;
 
-    try {
-      window.scrollTo({ left: targetX, top: targetY, behavior: "instant" });
-    } catch (_e) {
-      window.scrollTo(targetX, targetY);
+    pendingDocScroll = { x: targetX, y: targetY };
+    if (!pendingDocRaf) {
+      pendingDocRaf = requestAnimationFrame(applyDocScrollFrame);
     }
-
-    context.logger.debug(`scroll apply doc x=${targetX} y=${targetY}`);
   }
 }

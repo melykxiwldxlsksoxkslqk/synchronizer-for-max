@@ -21,7 +21,6 @@ import { ScrollActionService } from "./scroll-action-service";
 import { SelectActionService } from "./select-action-service";
 import { SubmitActionService } from "./submit-action-service";
 import { TouchActionService } from "./touch-action-service";
-import { WheelActionService } from "./wheel-action-service";
 
 export function createActionServices(): BrowserActionService[] {
   return [
@@ -43,7 +42,6 @@ export function createActionServices(): BrowserActionService[] {
     new CompositionActionService(),
     new SelectActionService(),
     new ScrollActionService(),
-    new WheelActionService(),
     new ClipboardActionService(),
     new TouchActionService(),
     new DragActionService(),
