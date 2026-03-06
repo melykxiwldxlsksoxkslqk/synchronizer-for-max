@@ -175,6 +175,14 @@ export interface DragActionPayload {
   fieldKey: string;
   scope: SyncScope;
   eventType: "dragstart" | "dragend" | "drop" | "drag" | "dragenter" | "dragleave" | "dragover";
+  clientX: number;
+  clientY: number;
+  screenX: number;
+  screenY: number;
+  sourceKey: string;
+  dropTargetKey?: string;
+  effectAllowed?: string;
+  dropEffect?: string;
 }
 
 export interface WheelActionPayload {
