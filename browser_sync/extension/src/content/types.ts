@@ -151,6 +151,8 @@ export interface ScrollActionPayload {
   scope: SyncScope;
   scrollX: number;
   scrollY: number;
+  ratioX: number;
+  ratioY: number;
   targetKey?: string;
 }
 
