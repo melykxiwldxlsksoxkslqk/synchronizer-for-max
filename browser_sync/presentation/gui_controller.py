@@ -19,6 +19,7 @@ from browser_sync.di_container import DIContainer
 from browser_sync.orchestrator import SyncOrchestrator
 from browser_sync.core.events.event_bus import EventBus, EventType
 from browser_sync.core.models.window import WindowInfo
+from browser_sync.services.extension_manager import ExtensionManager
 
 logger = logging.getLogger("BrowserSync.GUI")
 
@@ -26,6 +27,7 @@ logger = logging.getLogger("BrowserSync.GUI")
 container: Optional[DIContainer] = None
 orchestrator: Optional[SyncOrchestrator] = None
 event_bus: Optional[EventBus] = None
+extension_manager: Optional[ExtensionManager] = None
 found_windows: List[WindowInfo] = []
 backend_log_queue = deque(maxlen=2000)
 backend_log_lock = threading.Lock()
@@ -33,11 +35,14 @@ backend_log_lock = threading.Lock()
 
 def _init():
     """Инициализация через DI Container."""
-    global container, orchestrator, event_bus
+    global container, orchestrator, event_bus, extension_manager
 
     container = DIContainer()
     orchestrator = container.build_orchestrator()
     event_bus = EventBus()
+    extension_manager = ExtensionManager()
+
+    _auto_build_extension()
 
     # Подписка на события для UI
     event_bus.subscribe(EventType.STATUS_CHANGED, _on_status_changed)
@@ -313,6 +318,55 @@ def get_upload_files() -> dict:
 def clear_upload_files():
     orchestrator.config.upload_file_paths = []
     orchestrator.config_service.save()
+
+
+# ---- Extension Management ----
+
+def _auto_build_extension():
+    """Автосборка расширения при старте приложения."""
+    try:
+        ok, msg = extension_manager.ensure_built()
+        level = "info" if ok else "warn"
+        logger.info(f"Extension: {msg}")
+        with backend_log_lock:
+            backend_log_queue.append(f"🧩 Extension: {msg}")
+    except Exception as e:
+        logger.warning(f"Extension auto-build failed: {e}")
+
+
+@eel.expose
+def get_extension_status() -> dict:
+    """Получить статус расширения."""
+    try:
+        return extension_manager.get_status()
+    except Exception as e:
+        return {"error": str(e), "built": False, "browser_found": False}
+
+
+@eel.expose
+def build_extension() -> dict:
+    """Принудительная пересборка расширения."""
+    try:
+        ok, msg = extension_manager.build()
+        return {"success": ok, "message": msg}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+
+@eel.expose
+def open_browser_with_extension(url: str = "https://www.google.com") -> dict:
+    """Открыть браузер с предзагруженным расширением."""
+    try:
+        ok, msg = extension_manager.open_browser_with_extension(url)
+        return {"success": ok, "message": msg}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+
+@eel.expose
+def get_extension_install_path() -> str:
+    """Путь к расширению для ручной установки."""
+    return extension_manager.get_manual_install_path()
 
 
 # ---- Lifecycle ----

@@ -596,10 +596,66 @@ async function refreshSyncStatus() {
     } catch(e) {}
 }
 
+// ===== EXTENSION MANAGEMENT =====
+
+async function onOpenBrowser() {
+    const btn = document.getElementById('openBrowserBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Запуск...';
+
+    try {
+        const result = await eel.open_browser_with_extension()();
+        if (result.success) {
+            addLog('🌐 ' + result.message, 'success');
+            showToast('Браузер открыт!', 'success');
+        } else {
+            addLog('⚠ ' + result.message, 'warning');
+            showToast(result.message, 'warning');
+        }
+    } catch (err) {
+        addLog('❌ Ошибка: ' + err, 'error');
+    }
+
+    btn.disabled = false;
+    btn.textContent = '🌐 Открыть Chrome с расширением';
+}
+
+async function checkExtensionStatus() {
+    try {
+        const status = await eel.get_extension_status()();
+        const el = document.getElementById('extStatus');
+        if (!el) return;
+
+        if (status.error) {
+            el.innerHTML = '<span class="ext-err">Ошибка: ' + status.error + '</span>';
+            return;
+        }
+
+        const parts = [];
+        if (status.version) {
+            parts.push('v' + status.version);
+        }
+        if (status.built) {
+            parts.push('<span class="ext-ok">собран</span>');
+        } else {
+            parts.push('<span class="ext-warn">не собран</span>');
+        }
+        if (status.browser_found) {
+            parts.push(status.browser_type);
+        } else {
+            parts.push('<span class="ext-err">браузер не найден</span>');
+        }
+        el.innerHTML = parts.join(' · ');
+    } catch (_) { /* no-op */ }
+}
+
 // ===== INIT =====
 
 window.addEventListener('load', () => {
     eel.get_settings()(loadSettings);
+
+    // Check extension status
+    setTimeout(checkExtensionStatus, 200);
 
     // Check state-sync mode status
     setTimeout(refreshSyncStatus, 500);
