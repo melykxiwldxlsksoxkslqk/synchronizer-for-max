@@ -62,7 +62,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === MESSAGE_TYPE_RELAY && message.action != null) {
     const senderTabId = sender.tab?.id;
-    chrome.tabs.query({}, (tabs) => {
+    chrome.tabs.query({ active: true }, (tabs) => {
       for (const tab of tabs) {
         if (tab.id == null || tab.id === senderTabId) continue;
         chrome.tabs.sendMessage(tab.id, {
@@ -82,7 +82,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     if (!key.startsWith(ACTION_BUS_PREFIX)) continue;
     if (!change.newValue) continue;
 
-    chrome.tabs.query({}, (tabs) => {
+    chrome.tabs.query({ active: true }, (tabs) => {
       for (const tab of tabs) {
         if (tab.id == null) continue;
         chrome.tabs.sendMessage(tab.id, {
@@ -106,7 +106,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, _tab) => {
   }
 
   getSessionId().then((sessionId) => {
-    chrome.tabs.query({}, (tabs) => {
+    chrome.tabs.query({ active: true }, (tabs) => {
       for (const tab of tabs) {
         if (tab.id == null || tab.id === tabId) continue;
         chrome.tabs.sendMessage(tab.id, {

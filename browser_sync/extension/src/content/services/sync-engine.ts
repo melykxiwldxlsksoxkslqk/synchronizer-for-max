@@ -396,6 +396,13 @@ export async function startSyncEngine(options: StartSyncEngineOptions): Promise<
   function applyRemoteAction(action: BrowserActionEnvelope): void {
     bumpMetric("actionsReceived");
 
+    if (document.visibilityState !== "visible") {
+      debugSample("drop.hidden", "skip remote action: tab not visible", {
+        actionType: action.actionType,
+      });
+      return;
+    }
+
     if (!config.enabled) {
       debugSample("drop.disabled", "skip remote action: sync disabled", {
         actionType: action.actionType,
@@ -589,6 +596,9 @@ export async function startSyncEngine(options: StartSyncEngineOptions): Promise<
   servicesByEventType.forEach((services, eventType) => {
     const listener = (event: Event): void => {
       if (!ensureActiveContext("capture-listener", { eventType })) {
+        return;
+      }
+      if (document.visibilityState !== "visible") {
         return;
       }
       if (!config.enabled) {
