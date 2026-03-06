@@ -1,0 +1,28 @@
+{
+  "action_delay": 0.05,
+  "random_delay": 0.02,
+  "sync_mouse_clicks": true,
+  "sync_mouse_move": false,
+  "sync_mouse_scroll": true,
+  "sync_keyboard": true,
+  "hotkey_toggle": "F6",
+  "hotkey_pause": "F7",
+  "hotkey_exit": "F8",
+  "use_relative_coords": true,
+  "browser_window_keywords": [
+    "Multilogin",
+    "Mirroring",
+    "Chrome",
+    "Chromium",
+    "Mozilla"
+  ],
+  "exclude_master": true,
+  "enable_logging": true,
+  "replay_delay_ms": 50,
+  "upload_file_paths": [],
+  "enable_dom_state_sync": true,
+  "state_sync_only": true,
+  "state_sync_host": "127.0.0.1",
+  "state_sync_port": 8000,
+  "state_sync_room": "default-room"
+}

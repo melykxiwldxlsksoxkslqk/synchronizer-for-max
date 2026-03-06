@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "BrowserSync State Bridge",
+  "version": "1.0.5",
+  "description": "State-sync bridge for form fields across browser tabs/windows",
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "dist/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["dist/content-script.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ]
+}
+

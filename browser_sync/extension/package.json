@@ -1,0 +1,13 @@
+{
+  "name": "browser-sync-state-extension",
+  "private": true,
+  "version": "1.0.3",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "npm run typecheck && node scripts/build.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.3",
+    "typescript": "^5.9.3"
+  }
+}

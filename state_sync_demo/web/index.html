@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>State Sync Demo</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="container">
+    <section class="panel">
+      <h1>State Sync Demo</h1>
+      <p class="hint">
+        Открой эту страницу в нескольких вкладках и печатай в полях ниже.
+        Изменения синхронизируются через Python WebSocket и локальный state store.
+      </p>
+
+      <div class="row">
+        <label class="control">
+          <span>Session ID</span>
+          <input id="sessionId" value="demo-room">
+        </label>
+        <button id="connectBtn">Подключиться</button>
+      </div>
+
+      <div class="status-row">
+        <span id="statusBadge" class="badge offline">offline</span>
+        <span class="meta" id="clientMeta"></span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Синхронизируемые поля</h2>
+      <div class="field-grid">
+        <label class="control">
+          <span>Email</span>
+          <input id="fieldEmail" placeholder="name@example.com">
+        </label>
+        <label class="control">
+          <span>Username</span>
+          <input id="fieldUsername" placeholder="cool_user">
+        </label>
+        <label class="control full">
+          <span>Комментарий</span>
+          <textarea id="fieldComment" rows="4" placeholder="Текст появится во всех вкладках"></textarea>
+        </label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Глобальный state</h2>
+      <pre id="stateDump">{}</pre>
+    </section>
+
+    <section class="panel">
+      <h2>Лог</h2>
+      <div id="logBox" class="log-box"></div>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>
+

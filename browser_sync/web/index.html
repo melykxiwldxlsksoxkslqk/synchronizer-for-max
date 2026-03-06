@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrowserSync</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
+    <div class="bg-glow glow2"></div>
+
+    <div class="app">
+
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo-icon">
+                    <div class="logo-pulse"></div>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                        <path d="M4 4h6v6H4zM14 4h6v6h-6zM14 14h6v6h-6z"/>
+                        <path d="M4 14h6v6H4z" stroke="var(--green)" opacity=".5"/>
+                        <path d="M10 7h4M7 10v4M17 10v4" stroke-dasharray="2 2"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1>Browser<span class="accent">Sync</span></h1>
+                    <p class="header-sub">Синхронизация окон браузера</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="status-badge" id="statusBadge">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span id="statusText">Ожидание</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- ===== STEPS GUIDE (shows when NOT syncing) ===== -->
+        <div class="steps-guide" id="stepsGuide">
+            <div class="step" id="step1">
+                <div class="step-num">1</div>
+                <div class="step-body">
+                    <div class="step-title">Открой браузеры</div>
+                    <div class="step-desc">Минимум 2 окна — Chrome, Firefox, Edge...</div>
+                </div>
+                <div class="step-status" id="step1status">
+                    <div class="spinner-small"></div>
+                </div>
+            </div>
+            <div class="step-arrow">→</div>
+            <div class="step" id="step2">
+                <div class="step-num">2</div>
+                <div class="step-body">
+                    <div class="step-title">Нажми кнопку</div>
+                    <div class="step-desc">Первое окно = главное, остальные — копии</div>
+                </div>
+                <div class="step-status" id="step2status"></div>
+            </div>
+            <div class="step-arrow">→</div>
+            <div class="step" id="step3">
+                <div class="step-num">3</div>
+                <div class="step-body">
+                    <div class="step-title">Работай!</div>
+                    <div class="step-desc">Клики, текст, скролл — повторяется во всех окнах</div>
+                </div>
+                <div class="step-status" id="step3status"></div>
+            </div>
+        </div>
+
+        <!-- ===== STATE SYNC BANNER ===== -->
+        <div class="sync-banner" id="syncBanner" style="display:none">
+            <div class="sync-icon" id="syncIcon">🧠</div>
+            <div class="sync-text">
+                <span id="syncMessage">State-sync режим активен</span>
+                <span class="sync-hint">Extension устанавливается один раз, далее синхронизация работает автоматически.</span>
+            </div>
+        </div>
+
+        <!-- ===== MAIN CONTROL AREA ===== -->
+        <div class="control-area">
+            <button class="mega-btn" id="megaBtn" onclick="onMegaClick()">
+                <div class="mega-btn-bg"></div>
+                <div class="mega-btn-content">
+                    <div class="mega-icon" id="megaIcon">▶</div>
+                    <div class="mega-text" id="megaText">ЗАПУСТИТЬ</div>
+                    <div class="mega-hint" id="megaHint">или нажми F6</div>
+                </div>
+            </button>
+            <div class="control-side">
+                <button class="pause-btn" id="pauseBtn" onclick="onPause()" style="display:none">
+                    <span id="pauseIcon">⏸</span>
+                    <span id="pauseText">Пауза</span>
+                    <kbd>F7</kbd>
+                </button>
+                <div class="quick-stats" id="quickStats" style="display:none">
+                    <div class="qs-item">
+                        <span class="qs-val" id="qsActions">0</span>
+                        <span class="qs-label">действий</span>
+                    </div>
+                    <div class="qs-sep">·</div>
+                    <div class="qs-item">
+                        <span class="qs-val" id="statTime">00:00</span>
+                        <span class="qs-label">время</span>
+                    </div>
+                    <div class="qs-sep">·</div>
+                    <div class="qs-item">
+                        <span class="qs-val" id="qsErrors">0</span>
+                        <span class="qs-label">ошибок</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== MAIN CONTENT ===== -->
+        <div class="main-content">
+
+            <!-- Windows Panel -->
+            <div class="panel windows-panel">
+                <div class="panel-header">
+                    <div class="ph-left">
+                        <h2>Окна браузера</h2>
+                        <span class="live-badge"><span class="live-dot"></span> live</span>
+                    </div>
+                    <span class="window-count" id="windowCount">0</span>
+                </div>
+                <div class="windows-list" id="windowsList">
+                    <div class="empty-state">
+                        <div class="empty-icon">🌐</div>
+                        <p class="empty-title">Окна не найдены</p>
+                        <p class="empty-sub">Открой Chrome, Firefox или другой браузер</p>
+                    </div>
+                </div>
+                <div class="windows-legend">
+                    <div class="legend-item"><span class="legend-dot master-dot"></span> <strong>Главное</strong> — работай тут</div>
+                    <div class="legend-item"><span class="legend-dot target-dot"></span> <strong>Цель</strong> — повторяет действия</div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="right-side">
+
+                <!-- Activity Log -->
+                <div class="panel log-panel">
+                    <div class="panel-header">
+                        <h2>📋 Журнал</h2>
+                        <div class="header-actions">
+                            <button class="btn-ghost" onclick="copyLogs()">Копировать</button>
+                            <button class="btn-ghost" onclick="clearLog()">Очистить</button>
+                        </div>
+                    </div>
+                    <div class="log-body" id="logBody"></div>
+                </div>
+
+                <!-- Settings -->
+                <div class="panel settings-panel">
+                    <div class="panel-header clickable" onclick="toggleSettings()">
+                        <h2>⚙ Настройки</h2>
+                        <span class="arrow" id="settingsArrow">▶</span>
+                    </div>
+                    <div class="settings-body collapsed" id="settingsBody">
+
+                        <p class="settings-hint">Что синхронизировать:</p>
+                        <div class="settings-grid">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="syncClicks" checked onchange="saveAllSettings()">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">🖱 Клики мыши</span>
+                            </label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="syncScroll" checked onchange="saveAllSettings()">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">📜 Скролл</span>
+                            </label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="syncKeyboard" checked onchange="saveAllSettings()">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">⌨ Клавиатура</span>
+                            </label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="syncMouseMove" onchange="saveAllSettings()">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">↗ Движение мыши</span>
+                            </label>
+                        </div>
+
+                        <div class="setting-divider"></div>
+
+                        <div class="setting-row">
+                            <label>Задержка между действиями:</label>
+                            <div class="range-wrap">
+                                <input type="range" id="delaySlider" min="0" max="200" step="5" value="50"
+                                       oninput="onDelayChange(this.value)">
+                                <span class="delay-value" id="delayValue">50 мс</span>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <label>Поиск окон по ключевым словам:</label>
+                            <input type="text" class="text-input" id="keywordsInput"
+                                   placeholder="Chrome, Multilogin, Mozilla..."
+                                   value="Multilogin, Mirroring, Chrome, Chromium, Mozilla"
+                                   onchange="saveAllSettings()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File Upload Panel -->
+                <div class="panel upload-panel">
+                    <div class="panel-header clickable" onclick="toggleUpload()">
+                        <h2>📂 Загрузка файлов</h2>
+                        <span class="arrow" id="uploadArrow">▶</span>
+                    </div>
+                    <div class="upload-body collapsed" id="uploadBody">
+                        <p class="settings-hint">Загрузка файлов во все окна без открытия проводника</p>
+
+                        <div class="upload-actions">
+                            <button class="upload-btn" onclick="onSelectFiles()">
+                                <span>📄</span> Выбрать файлы
+                            </button>
+                            <button class="upload-btn" onclick="onSelectFolder()">
+                                <span>📁</span> Выбрать папку
+                            </button>
+                        </div>
+
+                        <div class="upload-files-list" id="uploadFilesList">
+                            <div class="upload-empty">Файлы не выбраны</div>
+                        </div>
+
+                        <div class="upload-bottom">
+                            <button class="upload-go-btn" id="uploadGoBtn" onclick="onDoUpload()" disabled>
+                                🚀 Загрузить во все окна
+                            </button>
+                            <button class="btn-ghost" onclick="onClearUpload()">Очистить</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="hotkeys">
+                <span class="hk"><kbd>F6</kbd> Старт / Стоп</span>
+                <span class="hk"><kbd>F7</kbd> Пауза</span>
+                <span class="hk"><kbd>F8</kbd> Выход</span>
+            </div>
+        </footer>
+    </div>
+
+    <script type="text/javascript" src="/eel.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
