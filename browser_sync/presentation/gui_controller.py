@@ -325,8 +325,11 @@ def clear_upload_files():
 def _auto_build_extension():
     """Автосборка расширения при старте приложения."""
     try:
+        saved_path = orchestrator.config.custom_browser_path
+        if saved_path:
+            extension_manager.custom_browser_path = saved_path
+
         ok, msg = extension_manager.ensure_built()
-        level = "info" if ok else "warn"
         logger.info(f"Extension: {msg}")
         with backend_log_lock:
             backend_log_queue.append(f"🧩 Extension: {msg}")
@@ -367,6 +370,57 @@ def open_browser_with_extension(url: str = "https://www.google.com") -> dict:
 def get_extension_install_path() -> str:
     """Путь к расширению для ручной установки."""
     return extension_manager.get_manual_install_path()
+
+
+@eel.expose
+def select_browser_exe() -> dict:
+    """Открыть диалог выбора .exe файла браузера."""
+    import tkinter as tk
+    from tkinter import filedialog
+    root = tk.Tk()
+    root.withdraw()
+    root.attributes("-topmost", True)
+    file_path = filedialog.askopenfilename(
+        title="Выбери .exe файл браузера (Chrome, Multilogin, GoLogin...)",
+        filetypes=[
+            ("Executable", "*.exe"),
+            ("All files", "*.*"),
+        ],
+    )
+    root.destroy()
+    if file_path:
+        normalized = os.path.normpath(file_path)
+        extension_manager.custom_browser_path = normalized
+        orchestrator.config.custom_browser_path = normalized
+        orchestrator.config_service.save()
+        return {
+            "success": True,
+            "path": normalized,
+            "name": os.path.basename(normalized),
+        }
+    return {"success": False, "path": "", "name": ""}
+
+
+@eel.expose
+def set_browser_path(path: str) -> dict:
+    """Установить путь к браузеру вручную."""
+    path = path.strip()
+    if path and not os.path.isfile(path):
+        return {"success": False, "message": f"Файл не найден: {path}"}
+    extension_manager.custom_browser_path = path
+    orchestrator.config.custom_browser_path = path
+    orchestrator.config_service.save()
+    return {
+        "success": True,
+        "path": path,
+        "name": os.path.basename(path) if path else "",
+    }
+
+
+@eel.expose
+def get_browser_path() -> str:
+    """Получить текущий путь к браузеру."""
+    return orchestrator.config.custom_browser_path or ""
 
 
 # ---- Lifecycle ----

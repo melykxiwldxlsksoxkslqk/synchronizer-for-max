@@ -191,6 +191,22 @@
 
                         <div class="setting-divider"></div>
 
+                        <p class="settings-hint">Браузер для синхронизации:</p>
+                        <div class="browser-picker">
+                            <div class="browser-path-row">
+                                <input type="text" class="text-input browser-path-input" id="browserPathInput"
+                                       placeholder="Авто (Chrome/Edge) или укажи путь к .exe"
+                                       readonly>
+                                <button class="upload-btn" onclick="onSelectBrowser()">📂 Выбрать</button>
+                                <button class="btn-ghost" onclick="onClearBrowser()">✕</button>
+                            </div>
+                            <div class="browser-hint" id="browserHint">
+                                Поддерживается любой Chromium-браузер: Chrome, Edge, Multilogin, GoLogin, AdsPower, Dolphin Anty...
+                            </div>
+                        </div>
+
+                        <div class="setting-divider"></div>
+
                         <div class="setting-row">
                             <label>Задержка между действиями:</label>
                             <div class="range-wrap">

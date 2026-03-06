@@ -42,6 +42,7 @@ class SyncConfig:
     state_sync_host: str = "127.0.0.1"
     state_sync_port: int = 8000
     state_sync_room: str = "default-room"
+    custom_browser_path: str = ""
 
     def save(self, path: str = None):
         """Сохранить конфигурацию в файл."""

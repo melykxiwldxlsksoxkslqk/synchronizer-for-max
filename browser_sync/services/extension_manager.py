@@ -4,8 +4,9 @@ ExtensionManager — управление Chrome-расширением BrowserS
 
 Отвечает за:
 - Проверку и автосборку расширения (npm run build)
-- Поиск Chrome/Edge на диске
+- Поиск Chrome/Edge/любого Chromium-браузера на диске
 - Запуск браузера с предзагруженным расширением (--load-extension)
+- Поддержку кастомного пути к браузеру (Multilogin, GoLogin, AdsPower, etc.)
 - Чтение версии расширения из manifest.json
 """
 
@@ -35,10 +36,19 @@ class ExtensionManager:
         self._extension_dir = self._project_root / "browser_sync" / "extension"
         self._dist_dir = self._extension_dir / "dist"
         self._manifest_path = self._extension_dir / "manifest.json"
+        self._custom_browser_path: str = ""
 
     @property
     def extension_dir(self) -> Path:
         return self._extension_dir
+
+    @property
+    def custom_browser_path(self) -> str:
+        return self._custom_browser_path
+
+    @custom_browser_path.setter
+    def custom_browser_path(self, path: str):
+        self._custom_browser_path = path.strip() if path else ""
 
     @property
     def is_built(self) -> bool:
@@ -133,7 +143,16 @@ class ExtensionManager:
                 return p
         return shutil.which("msedge")
 
-    def find_browser(self) -> tuple[Optional[str], str]:
+    def resolve_browser(self) -> tuple[Optional[str], str]:
+        """
+        Определяет какой браузер использовать.
+        Приоритет: кастомный путь → Chrome → Edge.
+        Возвращает (path, label).
+        """
+        if self._custom_browser_path and os.path.isfile(self._custom_browser_path):
+            name = Path(self._custom_browser_path).stem
+            return self._custom_browser_path, name
+
         chrome = self.find_chrome()
         if chrome:
             return chrome, "chrome"
@@ -144,14 +163,24 @@ class ExtensionManager:
 
         return None, "none"
 
-    def open_browser_with_extension(self, url: str = "https://www.google.com") -> tuple[bool, str]:
+    def open_browser_with_extension(
+        self, url: str = "https://www.google.com", browser_path_override: str = "",
+    ) -> tuple[bool, str]:
         ok, msg = self.ensure_built()
         if not ok:
             return False, msg
 
-        browser_path, browser_type = self.find_browser()
+        if browser_path_override and os.path.isfile(browser_path_override):
+            browser_path = browser_path_override
+            browser_label = Path(browser_path).stem
+        else:
+            browser_path, browser_label = self.resolve_browser()
+
         if not browser_path:
-            return False, "Chrome или Edge не найдены. Установите Google Chrome."
+            return False, (
+                "Браузер не найден. Укажи путь к .exe файлу браузера в настройках "
+                "(Chrome, Multilogin, GoLogin, AdsPower, Dolphin Anty и т.д.)"
+            )
 
         ext_path = str(self._extension_dir.resolve())
 
@@ -169,12 +198,12 @@ class ExtensionManager:
             )
             version = self.read_version() or "?"
             return True, (
-                f"{browser_type.capitalize()} запущен с расширением v{version}. "
+                f"{browser_label} запущен с расширением v{version}. "
                 f"Если браузер уже был открыт, расширение может не загрузиться — "
-                f"закрой все окна браузера и попробуй снова."
+                f"закрой все окна этого браузера и попробуй снова."
             )
         except Exception as e:
-            return False, f"Не удалось запустить браузер: {e}"
+            return False, f"Не удалось запустить {browser_label}: {e}"
 
     def get_manual_install_path(self) -> str:
         return str(self._extension_dir.resolve())
@@ -183,7 +212,7 @@ class ExtensionManager:
         version = self.read_version()
         built = self.is_built
         needs_rebuild = self.needs_rebuild() if built else True
-        browser_path, browser_type = self.find_browser()
+        browser_path, browser_label = self.resolve_browser()
 
         return {
             "version": version,
@@ -191,8 +220,9 @@ class ExtensionManager:
             "needs_rebuild": needs_rebuild,
             "extension_path": str(self._extension_dir.resolve()),
             "browser_found": browser_path is not None,
-            "browser_type": browser_type,
+            "browser_type": browser_label,
             "browser_path": browser_path or "",
+            "custom_browser_path": self._custom_browser_path,
         }
 
     def _find_chrome_in_registry(self) -> Optional[str]:

@@ -596,6 +596,39 @@ async function refreshSyncStatus() {
     } catch(e) {}
 }
 
+// ===== BROWSER PICKER =====
+
+async function onSelectBrowser() {
+    try {
+        const result = await eel.select_browser_exe()();
+        if (result.success) {
+            document.getElementById('browserPathInput').value = result.path;
+            addLog('🌐 Браузер выбран: ' + result.name, 'success');
+            checkExtensionStatus();
+        }
+    } catch (err) {
+        addLog('❌ Ошибка: ' + err, 'error');
+    }
+}
+
+async function onClearBrowser() {
+    try {
+        await eel.set_browser_path('')();
+        document.getElementById('browserPathInput').value = '';
+        addLog('🌐 Путь к браузеру сброшен (авто-поиск Chrome/Edge)', 'info');
+        checkExtensionStatus();
+    } catch (_) { /* no-op */ }
+}
+
+async function loadBrowserPath() {
+    try {
+        const path = await eel.get_browser_path()();
+        if (path) {
+            document.getElementById('browserPathInput').value = path;
+        }
+    } catch (_) { /* no-op */ }
+}
+
 // ===== EXTENSION MANAGEMENT =====
 
 async function onOpenBrowser() {
@@ -654,8 +687,9 @@ async function checkExtensionStatus() {
 window.addEventListener('load', () => {
     eel.get_settings()(loadSettings);
 
-    // Check extension status
+    // Check extension status & load browser path
     setTimeout(checkExtensionStatus, 200);
+    setTimeout(loadBrowserPath, 250);
 
     // Check state-sync mode status
     setTimeout(refreshSyncStatus, 500);
